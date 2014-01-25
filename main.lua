@@ -13,14 +13,15 @@
 
 COLOURS = {
 	DEFAULT = {255, 255, 255},
-	PLAYER = {0, 255, 0}, --brightest green
-	ENTITY = {100, 154, 91}, --moss green
-	RED = {255, 0, 0},
-	BLUE = {0, 0, 255}
-	
+	--PLAYER = {0, 255, 0}, --brightest green
+	PLAYER = {100, 154, 91}, --moss green
+	ENTITY = {50, 80, 30},
+	TEXTBOX = {50, 50, 50, 125}
 }
 
 WORLD_SIZE = {100, 100}
+MAX_ENTITIES = 6
+
 
 player = {}
 
@@ -28,7 +29,7 @@ player = {}
 function player:init()
 	self.pos = {0, 0}
 	self.size = 5
-	self.camera = 10
+	self.camera = 50
 	self.identity = {0, 0}
 	self.speed = 20
 	self.lives = 3
@@ -37,8 +38,8 @@ end
 --player always drawn at centre, entities drawn relative
 function player:draw()
 	sw, sh = love.graphics.getMode()
-	love.graphics.setColor(unpack(COLOURS.ENTITY))
-	
+	love.graphics.setColor(unpack(COLOURS.PLAYER))
+	--love.graphics.setColor(unpack(COLOURS.ENTITY))
 	love.graphics.rectangle("fill", 0.5*sw - self.size / WORLD_SIZE[1] * sw, 0.5*sh - self.size /WORLD_SIZE[1] *sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
 end
 
@@ -61,7 +62,7 @@ function player:update(dt)
 	end
 	
 	
-	for i=1,2 do
+	for i = 1,2 do
 		if math.abs(self.pos[i]) > WORLD_SIZE[i] / 2 then
 			self.pos[i] = self.pos[i] / math.abs(self.pos[i]) * WORLD_SIZE[1] / 2 
 		end
@@ -83,22 +84,31 @@ end
 function world:draw()
 
 	hue = {player.pos[1] + WORLD_SIZE[1]/2, 0, WORLD_SIZE[1]/2 - player.pos[1] }
-	sat = (player.pos[2] + 100) / WORLD_SIZE[2]
+	sat = (-player.pos[2] + 100) / WORLD_SIZE[2]
 	love.graphics.setBackgroundColor(hue[1]*sat, 0, hue[3]*sat)
 	
+	for _, e in ipairs(self.entities) do
+		e:draw()	
+	end
 end
 
 function world:update(dt)
 
+	for _, e in ipairs(self.entities) do
+		e:update(dt)
+	end
 end
 
 Entity = {}
 
-function Entity:new()
+function Entity:new(spawn)
+
 	local o = {
-
-
+		origin = spawn
 	}
+	o.pos = { clamp(spawn[1] + player[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
+				clamp(spawn[2] + player[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
+
 	setmetatable(o, self)
 	self.__index = self
 	return o
@@ -121,13 +131,22 @@ end
 
 
 function love.draw()
-
 	world:draw()
 	player:draw()
 end
 
 
 
+
+function clamp(x, min, max)
+	if x > max then
+		return max
+	elseif x < min then
+		return min
+	else
+		return x 
+	end
+end
 
 --Euclidean distance
 function distance(p1, p2)
