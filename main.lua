@@ -1,6 +1,8 @@
 --[[
-	Political Squares
+
+	Standpoint
 	
+	Josh Douglass-Molloy
 	Jam: Global Game Jam 2014
 	Theme: "We don't see things as they are, we see them as we are."
 
@@ -12,7 +14,7 @@
 COLOURS = {
 	DEFAULT = {255, 255, 255},
 	PLAYER = {0, 255, 0}, --brightest green
-	ENTITY = {138, 154, 91}, --moss green
+	ENTITY = {100, 154, 91}, --moss green
 	RED = {255, 0, 0},
 	BLUE = {0, 0, 255}
 	
@@ -29,12 +31,13 @@ function player:init()
 	self.camera = 10
 	self.identity = {0, 0}
 	self.speed = 20
+	self.lives = 3
 end
 
 --player always drawn at centre, entities drawn relative
 function player:draw()
 	sw, sh = love.graphics.getMode()
-	love.graphics.setColor(unpack(COLOURS.PLAYER))
+	love.graphics.setColor(unpack(COLOURS.ENTITY))
 	
 	love.graphics.rectangle("fill", 0.5*sw - self.size / WORLD_SIZE[1] * sw, 0.5*sh - self.size /WORLD_SIZE[1] *sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
 end
@@ -57,23 +60,28 @@ function player:update(dt)
 		self.pos[1]	= self.pos[1] + self.speed * dt
 	end
 	
-	if math.abs(self.pos[1]) > WORLD_SIZE[1] / 2 then
-		self.pos[1] = self.pos[1] / math.abs(self.pos[1]) * WORLD_SIZE[1] / 2 
+	
+	for i=1,2 do
+		if math.abs(self.pos[i]) > WORLD_SIZE[i] / 2 then
+			self.pos[i] = self.pos[i] / math.abs(self.pos[i]) * WORLD_SIZE[1] / 2 
+		end
 	end
 
-	if math.abs(self.pos[2]) > WORLD_SIZE[2] / 2 then
+--[[	if math.abs(self.pos[2]) > WORLD_SIZE[2] / 2 then
 		self.pos[2] = self.pos[2] / math.abs(self.pos[2]) * WORLD_SIZE[2] / 2 
 	end
+]]--
 end
 
 
 world = {}
 
 function world:init()
-
+	self.entities = {}
 end
 
 function world:draw()
+
 	hue = {player.pos[1] + WORLD_SIZE[1]/2, 0, WORLD_SIZE[1]/2 - player.pos[1] }
 	sat = (player.pos[2] + 100) / WORLD_SIZE[2]
 	love.graphics.setBackgroundColor(hue[1]*sat, 0, hue[3]*sat)
