@@ -31,7 +31,7 @@ function player:init()
 	self.size = 5
 	self.camera = 50
 	self.identity = {0, 0}
-	self.speed = 20
+	self.speed = 35
 	self.lives = 3
 end
 
@@ -68,10 +68,6 @@ function player:update(dt)
 		end
 	end
 
---[[	if math.abs(self.pos[2]) > WORLD_SIZE[2] / 2 then
-		self.pos[2] = self.pos[2] / math.abs(self.pos[2]) * WORLD_SIZE[2] / 2 
-	end
-]]--
 end
 
 
@@ -83,13 +79,16 @@ end
 
 function world:draw()
 
-	hue = {player.pos[1] + WORLD_SIZE[1]/2, 0, WORLD_SIZE[1]/2 - player.pos[1] }
-	sat = (-player.pos[2] + 100) / WORLD_SIZE[2]
+	hue = {2.5*(player.pos[1] + WORLD_SIZE[1]/2), 0, 2.5*(WORLD_SIZE[1]/2 - player.pos[1]) }
+	sat = 0.5 + 0.3 * (-player.pos[2] / (WORLD_SIZE[2] / 2))
+	
 	love.graphics.setBackgroundColor(hue[1]*sat, 0, hue[3]*sat)
 	
 	for _, e in ipairs(self.entities) do
 		e:draw()	
 	end
+
+	print("PLAYER X " .. player.pos[1] .. " PLAYER Y " .. player.pos[2] .. " R-B " .. hue[1] .. " " .. hue[3] .. " SAT " .. sat )
 end
 
 function world:update(dt)
@@ -115,7 +114,6 @@ function Entity:new(spawn)
 end
 
 
-
 function love.load()
 	world:init()
 	player:init()
@@ -134,8 +132,6 @@ function love.draw()
 	world:draw()
 	player:draw()
 end
-
-
 
 
 function clamp(x, min, max)
