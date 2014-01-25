@@ -13,7 +13,6 @@
 
 COLOURS = {
 	DEFAULT = {255, 255, 255},
-	--PLAYER = {0, 255, 0}, --brightest green
 	PLAYER = {100, 154, 91}, --moss green
 	ENTITY = {50, 80, 30},
 	TEXTBOX = {50, 50, 50, 125}
@@ -88,7 +87,6 @@ function world:draw()
 		e:draw()	
 	end
 
-	print("PLAYER X " .. player.pos[1] .. " PLAYER Y " .. player.pos[2] .. " R-B " .. hue[1] .. " " .. hue[3] .. " SAT " .. sat )
 end
 
 function world:update(dt)
@@ -134,6 +132,11 @@ function love.draw()
 end
 
 
+--Euclidean distance
+function distance(p1, p2)
+	return math.sqrt(math.pow(p1[1] - p2[2], 2), math.pow(p1[1], p2[2], 2))
+end
+
 function clamp(x, min, max)
 	if x > max then
 		return max
@@ -144,7 +147,4 @@ function clamp(x, min, max)
 	end
 end
 
---Euclidean distance
-function distance(p1, p2)
-	return math.sqrt(math.pow(p1[1] - p2[2], 2), math.pow(p1[1], p2[2], 2))
-end
+
