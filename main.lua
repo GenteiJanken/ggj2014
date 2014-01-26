@@ -18,7 +18,7 @@ COLOURS = {
 	TEXTBOX = {50, 50, 50, 125}
 }
 
-WORLD_SIZE = {100, 100}
+WORLD_SIZE = {200, 200}
 MAX_ENTITIES = 6
 
 TEST_ENTITY_SPAWNS = {
@@ -30,6 +30,22 @@ TEST_ENTITY_SPAWNS = {
 	{-50, -50}
 }
 
+PLAYER_IDENTITIES = {
+	
+	{0, 0},
+	{25, 0},
+	{0, 25},
+	{25, 25},
+	{-25, 0},
+	{0, -25},
+	{-25, -25},
+	{-25, 25},
+	{25, -25}
+
+}
+
+
+
 GUESS_TOLERANCE = 10
 
 
@@ -38,10 +54,11 @@ player = {}
 
 function player:init()
 	self.pos = {0, 0}
-	self.size = 5
+	self.size = 10
 	self.camera = 20
-	self.identity = {0, 0}
-	self.speed = 35
+	self.identity = PLAYER_IDENTITIES[math.random(#PLAYER_IDENTITIES)]
+	--print("IDENTITY " .. self.identity[1] .. " " .. self.identity[2])
+	self.speed = 70
 	self.lives = 3
 end
 
@@ -73,7 +90,7 @@ function player:update(dt)
 	
 	for i = 1, 2 do
 		if math.abs(self.pos[i]) > WORLD_SIZE[i] / 2 then
-			self.pos[i] = self.pos[i] / math.abs(self.pos[i]) * WORLD_SIZE[1] / 2 
+			self.pos[i] = self.pos[i] / math.abs(self.pos[i]) * WORLD_SIZE[i] / 2 
 		end
 	end
 
@@ -113,18 +130,21 @@ end
 
 function world:draw()
 
-	hue = {2.5*(player.pos[1] + WORLD_SIZE[1]/2), 0, 2.5*(WORLD_SIZE[1]/2 - player.pos[1]) }
-	sat = 0.5 + 0.3 * (-player.pos[2] / (WORLD_SIZE[2] / 2))
+	hue = {255*(player.pos[1] + WORLD_SIZE[1]/2)/WORLD_SIZE[1], 0, 255*(WORLD_SIZE[1]/2 - player.pos[1])/WORLD_SIZE[1] }
+	sat = 0.5 + 0.3 * (-2*player.pos[2] / WORLD_SIZE[2])
 	
 	love.graphics.setBackgroundColor(hue[1]*sat, 0, hue[3]*sat)
 	
 	for _, e in ipairs(self.entities) do
 		e:draw()	
 	end
-
+	
 end
 
+function world:getBackground()
 
+
+end
 
 Entity = {}
 
@@ -132,7 +152,7 @@ function Entity:new(spawn)
 
 	local o = {
 		origin = spawn,
-		size = 5,
+		size = 10,
 		active = true
 	}
 	o.pos = spawn --{ clamp(spawn[1] + player.pos[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
@@ -149,7 +169,7 @@ function Entity:update(dt)
 end
 
 function Entity:draw()
-	drawpos = player:worldtoscreen(self.pos, self.size)
+	drawpos = player:worldtoscreen(self.pos)
 	love.graphics.setColor(unpack(COLOURS.ENTITY))
 	if drawpos then
 	love.graphics.rectangle("fill", drawpos[1] - self.size/WORLD_SIZE[1] * sw, drawpos[2] - self.size/WORLD_SIZE[2] * sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
@@ -190,4 +210,3 @@ function clamp(x, min, max)
 		return x 
 	end
 end
-
