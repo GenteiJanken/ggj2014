@@ -1,4 +1,4 @@
 ggj2014
 =======
 
-A game of deduction.
+A game of space and perception

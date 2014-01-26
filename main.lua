@@ -20,14 +20,21 @@ COLOURS = {
 
 WORLD_SIZE = {200, 200}
 MAX_ENTITIES = 6
-
+---[[
 TEST_ENTITY_SPAWNS = {
 	{35, 35},
 	{-35, 35},
 	{35, -35},
 	{-35, -35},
 	{50, 50},
-	{-50, -50}
+	{-50, -50},
+	
+	
+}
+--]]--
+ENTITY_SPAWNS = {
+
+
 }
 
 PLAYER_IDENTITIES = {
@@ -129,11 +136,8 @@ function world:update(dt)
 end
 
 function world:draw()
-
-	hue = {255*(player.pos[1] + WORLD_SIZE[1]/2)/WORLD_SIZE[1], 0, 255*(WORLD_SIZE[1]/2 - player.pos[1])/WORLD_SIZE[1] }
-	sat = 0.5 + 0.3 * (-2*player.pos[2] / WORLD_SIZE[2])
-	
-	love.graphics.setBackgroundColor(hue[1]*sat, 0, hue[3]*sat)
+	r, b = self:getBackground(player.pos)
+	love.graphics.setBackgroundColor(r, 0, b)
 	
 	for _, e in ipairs(self.entities) do
 		e:draw()	
@@ -141,9 +145,10 @@ function world:draw()
 	
 end
 
-function world:getBackground()
-
-
+function world:getBackground(pos)
+	hue = {255*(pos[1] + WORLD_SIZE[1]/2)/WORLD_SIZE[1], 0, 255*(WORLD_SIZE[1]/2 - pos[1])/WORLD_SIZE[1] }
+	sat = 0.5 + 0.3 * (-2*player.pos[2] / WORLD_SIZE[2])
+	return hue[1] * sat, hue[3] * sat
 end
 
 Entity = {}
@@ -155,8 +160,8 @@ function Entity:new(spawn)
 		size = 10,
 		active = true
 	}
-	o.pos = spawn --{ clamp(spawn[1] + player.pos[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
-			--	clamp(spawn[2] + player.pos[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
+	o.pos = {clamp(spawn[1] + player.identity[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
+				clamp(spawn[2] + player.identity[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
 
 	setmetatable(o, self)
 	self.__index = self
@@ -193,6 +198,13 @@ end
 function love.draw()
 	world:draw()
 	player:draw()
+end
+
+function love.keyreleased(key, unicode)
+	if key == 'lshift' or key == 'rshift' then
+		player.pos[1] = 0
+		player.pos[2] = 0
+	end
 end
 
 
