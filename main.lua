@@ -33,13 +33,24 @@ TEST_ENTITY_SPAWNS = {
 }
 --]]--
 ENTITY_SPAWNS = {
+	{35, 35},
 
-
+	{-35, 35},
+	{35, -35},
+	{-35, -35},
+	{50, 50},
+	{-50, -50},
+	{50, 0},
+	{0, 50},
+	{-50, 0},
+	{0, -50},
+	{-50, 50},
+	{50, -50}
 }
 
 PLAYER_IDENTITIES = {
 	
-	{0, 0},
+--	{0, 0},
 	{25, 0},
 	{0, 25},
 	{25, 25},
@@ -53,7 +64,7 @@ PLAYER_IDENTITIES = {
 
 
 
-GUESS_TOLERANCE = 10
+GUESS_TOLERANCE = 15
 
 
 player = {}
@@ -64,7 +75,6 @@ function player:init()
 	self.size = 10
 	self.camera = 20
 	self.identity = PLAYER_IDENTITIES[math.random(#PLAYER_IDENTITIES)]
-	--print("IDENTITY " .. self.identity[1] .. " " .. self.identity[2])
 	self.speed = 70
 	self.lives = 3
 end
@@ -110,7 +120,6 @@ function player:worldtoscreen(pos)
 	if math.abs(relative[1]) <= self.camera + self.size and math.abs(relative[2]) <= self.camera + self.size then
 		return {(relative[1] + self.camera) / (self.camera * 2.0) * sw, 
 				(1.0 - (relative[2] + self.camera) / (self.camera * 2.0)) * sh }
-		--return res
 	else
 		return false
 	end
@@ -122,21 +131,53 @@ world = {}
 
 function world:init()
 	self.entities = {}
-	
-	for i=1, MAX_ENTITIES do
+	self.collision = 0	
+--[[	for i=1, MAX_ENTITIES do
 		table.insert(self.entities, Entity:new(TEST_ENTITY_SPAWNS[i]))
 	end
+]]--
+	ents = 0
+	vals = {-50, -35, 0, 35, 50}
+	
+	while(ents < MAX_ENTITIES) do
+		unique = true	
+	
+		trial = {vals[math.random(#vals)], vals[math.random(#vals)]}
+
+		if distance(trial, player.pos) == 0 then
+			unique = false	
+		end
+
+		for _, v in ipairs(self.entities) do
+			if distance(trial, v.origin) == 0 then
+				unique = false
+			end
+		end
+
+		if unique then
+			table.insert(self.entities, Entity:new(trial))
+			ents = ents + 1
+		end
+	end 
 end
 
 function world:update(dt)
-
-	for _, e in ipairs(self.entities) do
+	self.collision = 0
+	for i, e in ipairs(self.entities) do
 		e:update(dt)
+		if distance(e.pos, player.pos) < 5 then
+			self.collision = i 
+			
+		end
 	end
 end
 
 function world:draw()
-	r, b = self:getBackground(player.pos)
+	if self.collision == 0 then 
+		r, b = self:getBackground(player.pos)
+	else 
+		r, b = self:getBackground(self.entities[self.collision].origin)
+	end	
 	love.graphics.setBackgroundColor(r, 0, b)
 	
 	for _, e in ipairs(self.entities) do
@@ -158,10 +199,12 @@ function Entity:new(spawn)
 	local o = {
 		origin = spawn,
 		size = 10,
-		active = true
+		active = true,
+		jitter = 4
 	}
-	o.pos = {clamp(spawn[1] + player.identity[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
-				clamp(spawn[2] + player.identity[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
+	--o.pos = spawn
+	
+	o.pos = {spawn[1] + player.identity[1], spawn[2] + player.identity[2]}
 
 	setmetatable(o, self)
 	self.__index = self
@@ -170,14 +213,24 @@ end
 
 function Entity:update(dt)
 
+	if distance(self.pos, player.pos) < 10 then
+		self:deactivate()
+		
+	end
+end
 
+function Entity:deactivate()
+	self.active = false
+	self.jitter = 0
 end
 
 function Entity:draw()
 	drawpos = player:worldtoscreen(self.pos)
 	love.graphics.setColor(unpack(COLOURS.ENTITY))
+	
 	if drawpos then
-	love.graphics.rectangle("fill", drawpos[1] - self.size/WORLD_SIZE[1] * sw, drawpos[2] - self.size/WORLD_SIZE[2] * sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
+	
+	love.graphics.rectangle("fill", drawpos[1] - self.size/WORLD_SIZE[1] * sw + math.random()*self.jitter, drawpos[2] - self.size/WORLD_SIZE[2] * sh + math.random() * self.jitter, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
 	end
 end
 
@@ -185,6 +238,8 @@ function love.load()
 	player:init()
 	world:init()
 	love.graphics.setBackgroundColor(255, 255,255)
+	gameover = false
+	text = ""
 end
 
 function love.update(dt)
@@ -194,23 +249,41 @@ function love.update(dt)
 
 end
 
-
 function love.draw()
 	world:draw()
 	player:draw()
+
 end
 
 function love.keyreleased(key, unicode)
 	if key == 'lshift' or key == 'rshift' then
 		player.pos[1] = 0
 		player.pos[2] = 0
+	elseif key == ' ' or key == 'g' then --a guess!
+		gameover = false
+		text = ""
+		sw, sh = love.graphics.getMode()
+		love.graphics.setBackgroundColor(0, 0, 0)
+		love.graphics.setColor(255, 255, 255)
+	
+		--if distance(player.pos, player.identity) <= GUESS_TOLERANCE then --Near enough
+		
+		if ((player.pos[1] == 0 and player.identity[1] == 0) or ( player.pos[1] / math.abs(player.pos[1]) == player.identity[1] / math.abs(player.identity[1])))
+			and ((player.pos[2] == 0 and player.identity[2] == 0) or player.pos[2] / math.abs(player.pos[2]) == player.identity[2] / math.abs(player.identity[2])) then  
+			print("You win! Please play again")
+		else --Failure!
+			print("You lose! Please play again.")
+		end
+		print("Guess: " .. player.pos[1] .. ", " .. player.pos[2])
+		print("Truth: " .. player.identity[1] .. ", " .. player.identity[2])
+		love.event.quit()				
 	end
 end
 
 
 --Euclidean distance
 function distance(p1, p2)
-	return math.sqrt(math.pow(p1[1] - p2[2], 2), math.pow(p1[1], p2[2], 2))
+	return math.sqrt(math.pow(p1[1] - p2[1], 2.0) + math.pow(p1[2] - p2[2], 2.0))
 end
 
 function clamp(x, min, max)
