@@ -1,6 +1,6 @@
 --[[
 
-	Standpoint
+	From Where I'm Standing...
 	
 	Josh Douglass-Molloy
 	Jam: Global Game Jam 2014
@@ -21,6 +21,17 @@ COLOURS = {
 WORLD_SIZE = {100, 100}
 MAX_ENTITIES = 6
 
+TEST_ENTITY_SPAWNS = {
+	{35, 35},
+	{-35, 35},
+	{35, -35},
+	{-35, -35},
+	{50, 50},
+	{-50, -50}
+}
+
+GUESS_TOLERANCE = 10
+
 
 player = {}
 
@@ -28,7 +39,7 @@ player = {}
 function player:init()
 	self.pos = {0, 0}
 	self.size = 5
-	self.camera = 50
+	self.camera = 20
 	self.identity = {0, 0}
 	self.speed = 35
 	self.lives = 3
@@ -37,9 +48,8 @@ end
 --player always drawn at centre, entities drawn relative
 function player:draw()
 	sw, sh = love.graphics.getMode()
-	love.graphics.setColor(unpack(COLOURS.PLAYER))
-	--love.graphics.setColor(unpack(COLOURS.ENTITY))
-	love.graphics.rectangle("fill", 0.5*sw - self.size / WORLD_SIZE[1] * sw, 0.5*sh - self.size /WORLD_SIZE[1] *sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
+	love.graphics.setColor(unpack(COLOURS.PLAYER))	
+	love.graphics.rectangle("fill", (0.5- self.size / WORLD_SIZE[1]) * sw, (0.5- self.size /WORLD_SIZE[1]) *sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
 end
 
 function player:update(dt)
@@ -61,7 +71,7 @@ function player:update(dt)
 	end
 	
 	
-	for i = 1,2 do
+	for i = 1, 2 do
 		if math.abs(self.pos[i]) > WORLD_SIZE[i] / 2 then
 			self.pos[i] = self.pos[i] / math.abs(self.pos[i]) * WORLD_SIZE[1] / 2 
 		end
@@ -69,11 +79,36 @@ function player:update(dt)
 
 end
 
+function player:worldtoscreen(pos)
+	--get position relative to player then transform to screen coordinates
+	relative = {pos[1] - self.pos[1], pos[2] - self.pos[2]}
+	sw, sh = love.graphics.getMode()
+	if math.abs(relative[1]) <= self.camera + self.size and math.abs(relative[2]) <= self.camera + self.size then
+		return {(relative[1] + self.camera) / (self.camera * 2.0) * sw, 
+				(1.0 - (relative[2] + self.camera) / (self.camera * 2.0)) * sh }
+		--return res
+	else
+		return false
+	end
+	
+end
+
 
 world = {}
 
 function world:init()
 	self.entities = {}
+	
+	for i=1, MAX_ENTITIES do
+		table.insert(self.entities, Entity:new(TEST_ENTITY_SPAWNS[i]))
+	end
+end
+
+function world:update(dt)
+
+	for _, e in ipairs(self.entities) do
+		e:update(dt)
+	end
 end
 
 function world:draw()
@@ -89,32 +124,41 @@ function world:draw()
 
 end
 
-function world:update(dt)
 
-	for _, e in ipairs(self.entities) do
-		e:update(dt)
-	end
-end
 
 Entity = {}
 
 function Entity:new(spawn)
 
 	local o = {
-		origin = spawn
+		origin = spawn,
+		size = 5,
+		active = true
 	}
-	o.pos = { clamp(spawn[1] + player[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
-				clamp(spawn[2] + player[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
+	o.pos = spawn --{ clamp(spawn[1] + player.pos[1], -WORLD_SIZE[1] / 2, WORLD_SIZE[1] / 2), 
+			--	clamp(spawn[2] + player.pos[2], -WORLD_SIZE[2] / 2, WORLD_SIZE[2] / 2)}
 
 	setmetatable(o, self)
 	self.__index = self
 	return o
 end
 
+function Entity:update(dt)
+
+
+end
+
+function Entity:draw()
+	drawpos = player:worldtoscreen(self.pos, self.size)
+	love.graphics.setColor(unpack(COLOURS.ENTITY))
+	if drawpos then
+	love.graphics.rectangle("fill", drawpos[1] - self.size/WORLD_SIZE[1] * sw, drawpos[2] - self.size/WORLD_SIZE[2] * sh, 2*self.size/WORLD_SIZE[1] *sw, 2*self.size/WORLD_SIZE[1] * sh)
+	end
+end
 
 function love.load()
-	world:init()
 	player:init()
+	world:init()
 	love.graphics.setBackgroundColor(255, 255,255)
 end
 
@@ -146,5 +190,4 @@ function clamp(x, min, max)
 		return x 
 	end
 end
-
 

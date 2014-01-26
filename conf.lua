@@ -1,8 +1,8 @@
--- conf.lua : configuration for Political Squares
+-- conf.lua : configuration for From Where I'm Standing
 -- Configuration file for game window
 
 function love.conf(t)
-    t.title = "Standpoint"        -- The title of the window the game is in (string)
+    t.title = "From Where I'm Standing"        -- The title of the window the game is in (string)
     t.author = "Josh Douglass-Molloy"        -- The author of the game (string)
     t.identity = nil            -- The name of the save directory (string)
     t.version = "0.8.0"               -- The LÖVE version this game was made for (number)
